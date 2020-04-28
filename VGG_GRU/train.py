@@ -28,44 +28,44 @@ parser.add_argument('--batch_size', type=int, default=1, metavar='N',
 					help='input batch size for training (max: 3)')
 parser.add_argument('--epochs', type=int, default=120, metavar='N',
 					help='number of epochs to train (default: 150)')
-parser.add_argument('--length', type=int, default=16,
-					help='crop length for training')
+# parser.add_argument('--length', type=int, default=16,
+# 					help='crop length for training')
 
 parser.add_argument('--preInitial', type=bool, default=True,
 					help='initial vgg from ImageNet')
 
-parser.add_argument('--dataset', type=str, default="Emotiw",
+parser.add_argument('--dataset', type=str, default="face_data",
 					help='train dataset')
-
+parser.add_argument('--checkpoint_dir', type=str, default="checkpoint",
+					help='checkpoint direction')
 args = parser.parse_args()
 
 print(args)
+print(args.dataset)
+trainlist = "C:/Users/신유원/Desktop/capstone project/workspaces/emotion_classification/VGG_GRU/train/"
+vallist =  "C:/Users/신유원/Desktop/capstone project/workspaces/emotion_classification/VGG_GRU/test/"
+# if os.path.isfile != True:
+# 	subprocess.call(["python", "./TrainTestlist/"+args.dataset+"/getTraintest_"+args.dataset+".py"])
 
-trainlist = "TrainTestlist/"+args.dataset+"/"+args.dataset+"_TRAIN.txt"
-vallist =  "TrainTestlist/"+args.dataset+"/"+args.dataset+"_VAL.txt"
 
-if os.path.isfile != True:
-	subprocess.call(["python", "./TrainTestlist/"+args.dataset+"/getTraintest_"+args.dataset+".py"])
-
-
-backupdir     = "weight"
-batch_size    = 1
+backupdir = "weight"
+batch_size = 1
 learning_rate = 0.00001
 
 best_accuracy = 0.
 metric = AccumulatedAccuracyMetric()
 
 ####here for same result#####
-num_workers   = 0
-# torch.backends.cudnn.enabled = False
+num_workers = 0
+torch.backends.cudnn.enabled = False
 torch.manual_seed(1)
-torch.cuda.manual_seed(1)
+# torch.cuda.manual_seed(1)
 random.seed(1)
 torch.backends.cudnn.benchmark = True
 # torch.backends.cudnn.deterministic = True
 
 
-if args.preInitial == True:
+if args.preInitial == False:
 	model = FERANet()
 	model = Initial(model)
 else:
@@ -74,7 +74,7 @@ else:
 
 processed_batches = 0
 kwargs = {'num_workers': num_workers, 'pin_memory': True}
-model = model.cuda()
+# model = model.cuda()        #non gpu
 
 
 optimizer = optim.SGD(model.parameters(), lr=learning_rate , momentum=0.9, weight_decay= 0.00005)
@@ -83,16 +83,26 @@ loss_function = nn.CrossEntropyLoss()
 
 use_Tensorboard = False
 
-def train(epoch,optimizer):
 
+def save_checkpoint(epoch, loss):
+	checkpoint_dir = os.path.abspath(args.checkpoint_dir)
+	if not os.path.exists(checkpoint_dir):
+		os.makedirs(checkpoint_dir)
+	checkpoint_path = os.path.join(checkpoint_dir, "models_epoch_%04d_loss_%.6f.pth" % (epoch, loss))
+	torch.save(checkpoint_path)
+	print("Checkpoint saved to {}".format(checkpoint_path))
+
+
+def train(epoch,optimizer):
+	if not os.path.exists(args.checkpoint_dir):
+		os.makedirs(args.checkpoint_dir)
 
 	train_loader = torch.utils.data.DataLoader(
-		dataset.listDataset(trainlist,length = args.length,
-					   shuffle=True,
+		dataset.listDataset(trainlist,                 #length = args.length,
+					  #shuffle=True,
 					   train=True,
 					   dataset = args.dataset),
-		batch_size=args.batch_size, shuffle=False, **kwargs)
-
+		batch_size=args.batch_size, shuffle=False,  **kwargs)
 
 	for param_group in optimizer.param_groups:
 		train_learning_rate = float(param_group['lr'])
@@ -107,9 +117,9 @@ def train(epoch,optimizer):
 
 
 		data = data.squeeze(0)
-		data = Variable(data).cuda()
+		data = Variable(data)#.cuda()
 
-		label = Variable(label.long()).cuda()
+		label = Variable(label.long())#.cuda()
 		label = label.squeeze(1)
 
 		optimizer.zero_grad()
@@ -177,6 +187,6 @@ def eval(epoch,metric):
 
 for epoch in range(1, args.epochs+1): 
 
-	# train(epoch,optimizer)
-	eval_accuary = eval(epoch,metric)
-
+	train(epoch,optimizer)
+	# eval_accuary = eval(epoch,metric)
+	# save_checkpoint(epoch, eval_accuracy)

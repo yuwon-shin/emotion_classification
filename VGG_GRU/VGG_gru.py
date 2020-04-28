@@ -10,7 +10,7 @@ class FERANet(nn.Module):
 	def __init__(self):
 		super(FERANet, self).__init__()
 		
-		self.conv1_1 = nn.Conv2d(3, 64, 3, padding=1)
+		self.conv1_1 = nn.Conv2d(3, 64, 3, padding=1)  #input channel, output channel, kernel size
 		self.relu1_1 = nn.ReLU(inplace=True)
 		self.conv1_2 = nn.Conv2d(64, 64, 3, padding=1)
 		self.relu1_2 = nn.ReLU(inplace=True)
@@ -56,7 +56,7 @@ class FERANet(nn.Module):
 
 		self.gru = nn.GRU(4096,128, batch_first=True)
 
-		self.classify = nn.Linear(128, 7)
+		self.classify = nn.Linear(128, 3)  # 3 classes - understand, neutral. not understand
 		self.dropout = nn.Dropout(p=0.8)
 
 

@@ -162,7 +162,7 @@ class VGG_Net(nn.Module):
         super(VGG_Net, self).__init__()
 
         self.pre_model = nn.Sequential(*list(model.children())[:-1])
-        self.classifier = nn.Linear(4096, 7)
+        self.classifier = nn.Linear(4096, 3)     # 3 class
 
     def forward(self, x):
         x = self.pre_model(x)
@@ -175,7 +175,12 @@ def Initial(model):
 
     model_vggface = VGG_Face_torch
     model_emotion = VGG_Net(model_vggface)
-    model_emotion.load_state_dict(torch.load('best7164.model'))
+    # best_model = torch.load('./best7164.model')
+    # num_ftrs = best_model.classifier[0]
+    # best_model.fc = nn.Linear(num_ftrs, 4)
+    model_emotion.load_state_dict(model_emotion)
+
+
     model_before_dict = model_emotion.state_dict()
 
     # model = FERANet()
