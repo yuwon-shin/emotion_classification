@@ -35,9 +35,8 @@ valid_dataloader = DataLoader(valid_dataset,  batch_size=batch_size, shuffle = F
 model_name = 'vgg16'
 feature_extract = True
 num_classes = 3
-# model = Model.init_pretrained_models(model_name, num_classes, feature_extract, use_pretrained=True)
-
 model = md.init_pretrained_models(model_name, num_classes, feature_extract, use_pretrained=True)
+
 
 model.to(device)
 criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -54,7 +53,7 @@ for epoch in range(epochs):
     for image, label in tqdm(train_dataloader, desc="Epoch [%d/%d]" % (epoch + 1, epochs)):
         optimizer.zero_grad()  # Optimizer를 0으로 초기화
         image = image / 255.
-        pred = model(image.float().transpose(3,2).transpose(1,2).to(device))
+        pred = model(image.float().transpose(3,2).transpose(2,1).to(device))
         loss = criterion(pred, label.to(device))
 
         loss.backward()

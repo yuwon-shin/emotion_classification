@@ -64,7 +64,7 @@ class VGG(nn.Module):
 
 def make_layers(cfg, batch_norm=False):
     layers = []
-    in_channels = 1
+    in_channels = 3
     for v in cfg:
         if v == 'M':
             layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
@@ -180,10 +180,12 @@ def vgg19_bn(pretrained=False, progress=True, **kwargs):
 def set_parameter_requires_grad(model, feature_extracting):
     if feature_extracting:
         for param in model.parameters():
-            param.requires_grad = True
+            param.requires_grad = True      # Freeze training for all layers
+
 
 
 def init_pretrained_models(model_name, num_classes, feature_extract, use_pretrained=True):
+
     model_ft = None
     input_size = 0
 
@@ -196,8 +198,12 @@ def init_pretrained_models(model_name, num_classes, feature_extract, use_pretrai
     # elif model_name == "resnet50":
     #     model_ft = models.resnet50(pretrained=use_pretrained)
 
+
     set_parameter_requires_grad(model_ft, feature_extract)
-    num_ftrs = model_ft.classifier.in_features
+    num_ftrs = model_ft.classifier[6].in_features
+    features = list(model_ft.classifier.children())[:-1]  # Remove last layer
+    # features.extend([nn.Linear(num_features, len(class_names))])  # Add our layer with 4 outputs
+    vgg16.classifier = nn.Sequential(*features)  # Replace the model classifier
     model_ft.fc = nn.Linear(num_ftrs, num_classes)
 
     return model_ft

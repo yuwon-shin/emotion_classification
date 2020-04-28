@@ -19,7 +19,7 @@ class FER(data.Dataset) :
 
     def __getitem__(self, index):
         image_path = self.img_list[index]
-        data = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        data = cv2.imread(image_path)
         data = torch.tensor(data)
 
         filename = image_path.split(os.sep)[-1]
