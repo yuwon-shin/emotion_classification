@@ -52,7 +52,7 @@ class FERANet(nn.Module):
 		self.pool5 = nn.MaxPool2d(2, stride=2, ceil_mode=True)  # 1/32
 
 		# fc6
-		self.fc6 = nn.Linear(512*7*7, 4096)
+		self.fc6 = nn.Linear(512*2*2, 4096)
 
 		self.gru = nn.GRU(4096,128, batch_first=True)
 
