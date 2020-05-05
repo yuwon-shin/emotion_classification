@@ -183,7 +183,7 @@ if __name__ == "__main__":
 						help='data shape : (b, <<l>>, c, h, w) | meaning batch in training | for making each batch containing same class')
 	parser.add_argument('--lr', type=float, default=1e-05)
 	parser.add_argument('--num_workers', type=int, default=2)
-	parser.add_argument('--optim', type=str, default='sgd', choices=['adam, sgd'])
+	parser.add_argument('--optim', type=str, default='sgd', choices=['adam', 'sgd'])
 
 	parser.add_argument('--multi_gpu', default=False, action='store_true',
 						help='Use Multi GPU')
