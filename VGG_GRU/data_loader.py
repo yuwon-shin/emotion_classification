@@ -1,21 +1,22 @@
+## cpu ver.
+## gpu 사용시 pinMemory = True
+
 #!/usr/bin/python
 # encoding: utf-8
 
 import os
-import random
-import torch
-import numpy as np
-import datetime
 import cv2
-from torch.utils.data import Dataset
+import glob
+import torch
+import random
+import datetime
+import numpy as np
+from utils import *
 from PIL import Image
-# from utils import *
 from torchvision import transforms
-from glob import glob
+from torch.utils import data
 
-
-
-class FER(Dataset):
+class FER(data.Dataset):
 
     def __init__(self, opt):
         # opt: mode('train', 'valid'), img_size, train_dir
@@ -23,46 +24,95 @@ class FER(Dataset):
         self.opt = opt
         self.mode = opt.mode
         self.img_size = opt.img_size
-        self.img_list = glob(os.path.join(opt.train_dir), '*.jpg')
-        self.len = len(self.img_list)
+        self.length = opt.length    # batch for kinda trick
+        self.iter = opt.iter
+        # self.img_list = glob(os.path.join(opt.train_dir), '*.jpg')
+        
+        if self.mode == 'train':
+            img_list_0 = glob.glob(os.path.join(opt.train_dir, 'Not_Understand', '*.jpg'))
+            img_list_1 = glob.glob(os.path.join(opt.train_dir, 'Neutral', '*.jpg'))
+            img_list_2 = glob.glob(os.path.join(opt.train_dir, 'Understand', '*.jpg'))
+        elif self.mode == 'valid':
+            img_list_0 = glob.glob(os.path.join(opt.valid_dir, 'Not_Understand', '*.jpg'))
+            img_list_1 = glob.glob(os.path.join(opt.valid_dir, 'Neutral', '*.jpg'))
+            img_list_2 = glob.glob(os.path.join(opt.valid_dir, 'Understand', '*.jpg'))
+        self.img_list_0 = sorted(img_list_0)
+        self.img_list_1 = sorted(img_list_1)
+        self.img_list_2 = sorted(img_list_2)
+        # 클래스 별 sample 개수
+        self.len0 = len(self.img_list_0)
+        self.len1 = len(self.img_list_1)
+        self.len2 = len(self.img_list_2)
+        print('Number of each class images >> len0 : {}, len1 : {}, len2 : {}'.format(self.len0, self.len1, self.len2))
+
 
     # 클래스에서의 __len__ & __getitem 구현 (double underbar method="special method")
     # → len()이용 가능 / index 접근으로 원하는 값을 얻을 수 있음
     # random module의 choice, sort 이용 가능
     # slicing (ex- carddeck[:3] ), in (ex- card('Q','heart') in deck >> True) 이용 가능
     def __len__(self):  
-        return self.nSamples
+        '''return self.nSamples'''
+        if self.iter:
+            return self.iter
+        else : 
+            return int(((self.len0 + self.len1 + self.len2))/500)
 
     def __getitem__(self, index):   
+        r = np.random.randint(9)
+        img_path = []
+        seq = np.zeros((self.length, 1, self.img_size, self.img_size))
 
         if self.mode == 'train' or self.mode=='valid':
-            img_path = self.img_list[index]
-            img = cv2.imread(img_path)      
-            ### tensor로 바꿔줘야 하나..? 만약 그렇다면 아래 코드 주석 해제
-            # img   = torch.from_numpy(img).float()         
-            # or, img = torch.tensor(img)
-            aug_img = self.transform(img)
+            if (r%3) == 0: img_list = self.img_list_0; num = self.len0
+            elif (r%3) == 1: img_list = self.img_list_1; num = self.len1
+            else : img_list = self.img_list_2; num = self.len2
 
+            idx = random.sample(range(num), self.length)
+            for i, img_num in enumerate(idx) : 
+                img_path.append(img_list[img_num])
+                img = cv2.imread(img_list[img_num], cv2.IMREAD_GRAYSCALE)
+                aug_img = self.transform(img)
+                # print('aug_img.shape :',aug_img.shape)
+                seq[i, :, :, :] = aug_img
+
+            seq = torch.from_numpy(seq).float()
+            label=int(img_path[0].split('_')[-1].split('.')[0]) #0-not understand ,1-neutral ,2-understand
+            label = torch.LongTensor([label])
+            # print('FER/ img_path : {}, label : {}'.format(img_path[0].split('\\')[-1], label))
+            return seq, label
+
+        else :
+            img = self.get_real_data()
+            return img
+
+            '''
+            if self.mode == 'train' or self.mode=='valid':
+            img_path = self.img_list[index]
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)      
+            aug_img = self.transform(img)
             label = int(img_path.split('_')[-1].split('.')[0]) #0-not understand ,1-neutral ,2-understand
                                             # -1: 뒤에서 첫번째 / ← split 순서 ←
             return aug_img, label
         else:
             img = self.get_real_data()      # for real-time
             return img
+            '''
+        
 
     def transform(self, img):
         ndim = img.ndim
         if ndim == 2:
-            h,w = img.shape
-            img = img.reshpae(1,h,w)
+            img = np.expand_dims(img, axis=0)   # 0: 제일 앞에 차원 추가 
+            # stacked_img = np.stack((img,) * 3, axis=0)    0: first dim 
+
         else :
             h,w,c = img.shape
             if c == 3:
                 # color to gray
-                img = np.dot(img[...,:3],[0.2999, 0.587, 0.144])
-                # or, img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
                 pass
         aug_img = self.augment(img)
+        # aug_img = torch.from_numpy(aug_img).float() # np arr to tensor
+        # print('data_loader aug_img.shape : ',aug_img.shape)
         return aug_img
 
 
@@ -82,7 +132,7 @@ class FER(Dataset):
 
     #for real-time
     def get_real_data(self):
-        img_shape = (1,self.img_size, self.img_size)    ### 이렇게 똑같이 써줘도 똑똑하게 h, w 구분하나..?
+        img_shape = (1,self.img_size, self.img_size)    
         crop_img = self.face_detection(self)
         #resize
         resize_img = np.resize(crop_img, img_shape)
@@ -162,30 +212,32 @@ class FER(Dataset):
 
         # Clear program and close windows
         camera.release()
-        cv2.destroyAllWindows()
+        # cv2.destroyAllWindows()
 
         return crop_img
         
 
 
-def get_train_valid_dataloader(opt):
-    dataset = FER(opt)
-    train_len = int(len(dataset)*opt.train_ratio)
-    valid_len = len(dataset)-train_len
-    train_dataset, valid_dataset = data.random_split(dataset, lengths=[train_len, valid_len])
+def get_dataloader(opt):
 
-    train_dataloader = data.DataLoader(dataset=train_dataset,
-                            batch_size=opt.batch_size,
-                            shuffle=True,
-                            pin_memory=True,
-                            num_workers=2)
-    valid_dataloader = data.DataLoader(dataset=valid_dataset,
-                            batch_size=opt.batch_size,
-                            shuffle=False,
-                            pin_memory=True,
-                            num_workers=2)
+    dataset = FER(opt)
+    length = len(dataset)
+
+    print('Length of {} dataloader : {}'.format(opt.mode, length))
+    if opt.mode == 'train':
+        dataloader = data.DataLoader(dataset=dataset,
+                                batch_size=1,
+                                shuffle=True,
+                                pin_memory=False,
+                                num_workers=opt.num_workers)
+    elif opt.mode == 'valid':
+        dataloader = data.DataLoader(dataset=dataset,
+                                batch_size=opt.batch_size,
+                                shuffle=True,
+                                pin_memory=False,
+                                num_workers=opt.num_workers)
     
-    return train_dataloader, valid_dataloader
+    return dataloader
 
 
 
