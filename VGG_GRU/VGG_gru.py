@@ -6,21 +6,21 @@ from torch.autograd import Variable
 import torch.utils.model_zoo as model_zoo
 
 
-class FERANet(nn.Module):    # nn.Module: 모든 신경망 모듈의 기본이 되는 클래스
+class VggNet(nn.Module):    # nn.Module: 모든 신경망 모듈의 기본이 되는 클래스
                              # 각 layer, 함수 등 신경망의 구성요소를 이 클래스 안에서 정의
                              # 매개변수를 encapsulation하는 방법
                              # GPU로 이동, exporting, loading 등의 작업을 위한 helper 제공
                              
 	def __init__(self):    # 초기화 함수
         
-		super(FERANet, self).__init__()   # super: 자식 클래스에서 부모 클래스의 내용을 사용
+		super(VggNet, self).__init__()   # super: 자식 클래스에서 부모 클래스의 내용을 사용
 		
         
+		## VGG
         ## 5개의 conv layer, 1개의 fc layer에 대한 정의  ##
         
-        
         # conv1
-		self.conv1_1 = nn.Conv2d(3, 64, 3, padding=1)    # 입력 채널, 출력 채널, 필터 크기
+		self.conv1_1 = nn.Conv2d(1, 64, 3, padding=1)    # 입력 채널, 출력 채널, 필터 크기
 		self.relu1_1 = nn.ReLU(inplace=True)
 		self.conv1_2 = nn.Conv2d(64, 64, 3, padding=1)
 		self.relu1_2 = nn.ReLU(inplace=True)
@@ -63,12 +63,12 @@ class FERANet(nn.Module):    # nn.Module: 모든 신경망 모듈의 기본이 �
 		self.pool5 = nn.MaxPool2d(2, stride=2, ceil_mode=True)  # → 1/32
 
 		# fc6: fully connected layer
-		self.fc6 = nn.Linear(512*7*7, 4096)    # torch.nn.Linear(input features, output features, bias=True)
+		self.fc6 = nn.Linear(512*2*2, 4096)    # torch.nn.Linear(input features, output features, bias=True)
                                                # 지난 output 채널 수 * input dimension (height * width)
 
 		self.gru = nn.GRU(4096,128, batch_first=True)
 
-		self.classify = nn.Linear(128, 3)    # 원래 7이었는데 3으로 바꿈
+		self.classify = nn.Linear(128, 3)   # 3 classes - understand, neutral, not understand
 		self.dropout = nn.Dropout(p=0.8)    # unit(hidden and visible)을 randomly 무시(drop out)
                                             # → reduce overfitting & improve generalization error
                                             # p=0.5: for retaining 각 node의 the output in a hidden layer
@@ -117,6 +117,7 @@ class FERANet(nn.Module):    # nn.Module: 모든 신경망 모듈의 기본이 �
                                                        # output의 shape과 똑같게  (org value: 1,16,4096)
                                                        # batchsize,sequence_length,data_dim
 
+		# VGG output → GRU
 		x, hn = self.gru(x)    
 
 		x = self.dropout(x)
@@ -133,5 +134,12 @@ class FERANet(nn.Module):    # nn.Module: 모든 신경망 모듈의 기본이 �
 		for s in size:
 			num_features *= s
 		return num_features
+
+
+
+
+
+
+
 
 
