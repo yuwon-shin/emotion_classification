@@ -55,7 +55,7 @@ class FER(data.Dataset):
         if self.iter:
             return self.iter
         else : 
-            return int(((self.len0 + self.len1 + self.len2))/500)
+            return int(((self.len0 + self.len1 + self.len2)))
 
     def __getitem__(self, index):   
         r = np.random.randint(9)
