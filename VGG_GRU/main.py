@@ -93,9 +93,6 @@ def valid(opt, epoch, model, valid_loader, metric):
 
 			output = []
 			for batch_index in range(Batch):
-				print('batch: ',Batch)
-				print('batch idx: ',batch_index)
-				print('@@ ',data[batch_index].shape)
 				output_feature = model(data[batch_index])
 				output.append(output_feature)
 			# print('output: ',output)
