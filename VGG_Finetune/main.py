@@ -20,11 +20,12 @@ lr = 1e-6
 epochs = 150
 batch_size = 64
 
-
-train_dataset = FER('face_data', image_size=64, mode='train')
+train_data_path = os.path.join('data', 'face_data')
+train_dataset = FER(train_data_path , image_size=64, mode='train')
 train_dataloader = DataLoader(train_dataset,  batch_size=batch_size, shuffle = True)
 
-valid_dataset = FER('face_data',image_size=64, mode='test')
+valid_data_path = os.path.join('data', 'face_data')
+valid_dataset = FER(valid_data_path,image_size=64, mode='val')
 valid_dataloader = DataLoader(valid_dataset,  batch_size=batch_size, shuffle = False)
 
 
