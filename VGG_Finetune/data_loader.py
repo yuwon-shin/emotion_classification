@@ -8,7 +8,7 @@ import cv2
 class FER(data.Dataset) :
 
     def __init__(self, data_path, image_size=64, mode='train') :
-        self.img_list = glob(os.path.join(data_path, mode, '*.jpg'))
+        self.img_list = glob(os.path.join(data_path, mode, '**', '*.jpg'), recursive = True)
         self.len = len(self.img_list)
         self.mode = mode
         self.image_size = image_size
