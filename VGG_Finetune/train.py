@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 
-#fgggf
+#fggg
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
 parser.add_argument('--batch_size', type=int, default=32, metavar='N',
                     help='input batch size for training (default: 64)')
