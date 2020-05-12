@@ -79,7 +79,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 	print('[*]Validation...')
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 
-	with torch.no_grad():
+	with torch.no_grad():		# gradient를 저장하지 않겠다!
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
 			Batch,T,C,H,W = data.size()
