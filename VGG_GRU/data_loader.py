@@ -1,6 +1,7 @@
 ## cpu ver.
 ## gpu 사용시 pinMemory = True
 
+
 #!/usr/bin/python
 # encoding: utf-8
 
@@ -18,11 +19,11 @@ from torch.utils import data
 
 class FER(data.Dataset):
 
-    def __init__(self, opt):
+    def __init__(self, opt, mode):
         # opt: mode('train', 'valid'), img_size, train_dir
 
         self.opt = opt
-        self.mode = opt.mode
+        self.mode = mode
         self.img_size = opt.img_size
         self.length = opt.length    # batch for kinda trick
         self.iter = opt.iter
@@ -52,9 +53,12 @@ class FER(data.Dataset):
     # slicing (ex- carddeck[:3] ), in (ex- card('Q','heart') in deck >> True) 이용 가능
     def __len__(self):  
         '''return self.nSamples'''
-        if self.iter:
-            return self.iter
-        else : 
+        if self.mode == 'train':
+            if self.iter:
+                return self.iter
+            else : 
+                return int(((self.len0 + self.len1 + self.len2)))
+        elif self.mode == 'valid': #valid는 iter에 상관없이 항상 모든 데이터 보게끔
             return int(((self.len0 + self.len1 + self.len2)))
 
     def __getitem__(self, index):   
@@ -83,21 +87,7 @@ class FER(data.Dataset):
 
         else :
             img = self.get_real_data()
-            return img
-
-            '''
-            if self.mode == 'train' or self.mode=='valid':
-            img_path = self.img_list[index]
-            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)      
-            aug_img = self.transform(img)
-            label = int(img_path.split('_')[-1].split('.')[0]) #0-not understand ,1-neutral ,2-understand
-                                            # -1: 뒤에서 첫번째 / ← split 순서 ←
-            return aug_img, label
-        else:
-            img = self.get_real_data()      # for real-time
-            return img
-            '''
-        
+            return img       
 
     def transform(self, img):
         ndim = img.ndim
@@ -218,19 +208,19 @@ class FER(data.Dataset):
         
 
 
-def get_dataloader(opt):
+def get_dataloader(opt,mode):
 
-    dataset = FER(opt)
+    dataset = FER(opt, mode)
     length = len(dataset)
 
     print('Length of {} dataloader : {}'.format(opt.mode, length))
-    if opt.mode == 'train':
+    if mode == 'train':
         dataloader = data.DataLoader(dataset=dataset,
                                 batch_size=1,
                                 shuffle=True,
                                 pin_memory=False,
                                 num_workers=opt.num_workers)
-    elif opt.mode == 'valid':
+    elif mode == 'valid':
         dataloader = data.DataLoader(dataset=dataset,
                                 batch_size=opt.batch_size,
                                 shuffle=True,
