@@ -57,7 +57,7 @@ class FER(data.Dataset):
             if self.iter:
                 return self.iter
             else : 
-                return int(((self.len0 + self.len1 + self.len2)))
+                return int(((self.len0 + self.len1 + self.len2))/100)
         elif self.mode == 'valid': #valid는 iter에 상관없이 항상 모든 데이터 보게끔
             return int(((self.len0 + self.len1 + self.len2)))
 
