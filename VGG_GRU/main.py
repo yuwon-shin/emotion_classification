@@ -41,9 +41,9 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 
 		data = data.squeeze(0)
-		data = Variable(data) #.cuda()
+		data = Variable(data) #.cuda() or ##### to(opt.device)
 
-		label = Variable(label.long()) #.cuda()
+		label = Variable(label.long()) #.cuda() or ##### to(opt.device)
 		label = label.squeeze(1)		
 		# print('main.py label: ',label)
 		# print("main.py size(label): ",label.shape)
@@ -58,7 +58,7 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 		# print('loss.item()',loss.item())
 
 		running_loss += loss.item()
-		print('Training [{}/{}] {:.2f}sec.. loss : {:.6f}, running_loss : {:.6f}'.format(batch_idx,len(train_loader), time.time()-start_time, loss.item(), running_loss/(batch_idx+1)))
+		print(' Training [{}/{}] {:.2f}sec.. loss : {:.6f}, running_loss : {:.6f}'.format(batch_idx,len(train_loader), time.time()-start_time, loss.item(), running_loss/(batch_idx+1)))
 
 		loss.backward()
 
@@ -85,14 +85,17 @@ def valid(opt, epoch, model, valid_loader, metric):
 			Batch,T,C,H,W = data.size()
 			
 			data = data.squeeze(0) 
-			data = Variable(data) #.cuda()
+			data = Variable(data) #.cuda() or ##### to(opt.device)
 
 
-			label = Variable(label.long()) #.cuda()
+			label = Variable(label.long()) #.cuda() or ##### to(opt.device)
 			label = label.squeeze(1)
 
 			output = []
 			for batch_index in range(Batch):
+				# print('batch: ',Batch)
+				# print('batch idx: ',batch_index)
+				# print('@@ ',data[batch_index].shape)
 				output_feature = model(data[batch_index])
 				output.append(output_feature)
 			# print('output: ',output)
@@ -104,60 +107,13 @@ def valid(opt, epoch, model, valid_loader, metric):
 			accuracy,eval_loss = metric.value()
 			avg_loss = eval_loss/((batch_idx+1)*opt.batch_size)
 			
-			# print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
-			# print('acc, loss:',accuracy, eval_loss)
+			print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
+			print('acc & loss:',accuracy, '&', eval_loss)
 
 	print('[*]Validation...')
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 
 	return accuracy, avg_loss	
-
-"""
-def eval(epoch, model, valid_loader, metric):
-
-	metric.reset()
-
-	# test_loader = torch.utils.data.DataLoader(
-	# 	dataset.listDataset(vallist,length = argoptngth,
-	# 				shuffle=False,
-	# 				train=False,
-	# 				dataset = argopttaset),
-	# 				batch_size=1, shuffle=False, **kwargs)
-
-	model.eval()
-
-	for batch_idx, (data, label) in enumerate(valid_loader):
-
-		data = data.squeeze(0)
-
-		Batch,T,C,H,W = data.size()
-
-		data = Variable(data,volatile=True).cuda()
-
-		label = Variable(label.long(),volatile=True).cuda()
-		label = label.squeeze(1)
-
-		output = []
-		for batch_index in range(Batch):
-			output_feature = model(data[batch_index])
-			output.append(output_feature)
-
-		output = torch.mean(torch.cat(output), 0, keepdim=True)
-
-		metric(output, label)
-		accuracy,eval_loss = metric.value()
-
-	if accuracy >= best_accuracy:
-		best_accuracy = accuracy
-		print("saving accuracy is: ",accuracy)
-		torch.save(model.state_dict(),'%s/model_%d.pkl' % (backupdir,epoch))
-
-	logging("test accuracy: %f" % (accuracy))
-	logging("best accuracy: %f" % (best_accuracy))
-	logging("eval loss:     %f" % (eval_loss))
-
-	return accuracy,eval_loss
-"""
 
 
 if __name__ == "__main__":
@@ -188,6 +144,11 @@ if __name__ == "__main__":
 	parser.add_argument('--multi_gpu', default=False, action='store_true',
 						help='Use Multi GPU')
 
+	#####
+	# parser.add_argument('--no_multi_gpu', default=False, action='store_true',
+	#					help='Do Not Use Multi GPUs')
+	# parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
+
 	parser.add_argument('--data_dir', type=str, default=data_dir,
 						help='dataset path')
 	parser.add_argument('--train_dir', type=str, default=train_dir)
@@ -211,9 +172,24 @@ if __name__ == "__main__":
 	torch.backends.cudnn.enabled = False
 	torch.backends.cudnn.deterministic = False
 
+	#####
+	# if torch.cuda.is_available():
+	# 	print('Setting GPU')
+	# 	print('===> CUDA Available: ', torch.cuda.is_available())
+	# 	opt.device = 'cuda'
+
+	# 	if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
+	# 		print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
+	# 	else :
+	# 		opt.multi_gpu = False
+
+	# else : 
+	# 	print('Using only CPU')
+
 	print('Initialize networks')
 	model = VggNet()
-	# model = model.cuda()
+	#####
+	# model = model.to(opt.device)
 
 	print("Setting Optimizer & loss")
 	if opt.optim == 'sgd':
@@ -229,16 +205,17 @@ if __name__ == "__main__":
 	if opt.multi_gpu:
 		model = nn.DataParallel(model)
 
+	train_data_loader = get_dataloader(opt,'train')
+	valid_data_loader = get_dataloader(opt,'valid')
+
 	metric = AccumulatedAccuracyMetric()
 	pre_valid_loss = float('inf')
 
 	for epoch in range(opt.start_epoch, opt.epochs+1): 
 		opt.mode = 'train'
-		train_data_loader = get_dataloader(opt)
 		train(opt, epoch, model, optimizer, loss_function, train_data_loader)
 
 		opt.mode = 'valid'
-		valid_data_loader = get_dataloader(opt)
 		valid_acc, valid_loss = valid(opt, epoch, model, valid_data_loader, metric)
 
 		if pre_valid_loss > valid_loss:
