@@ -141,7 +141,7 @@ if __name__ == "__main__":
 	parser.add_argument('--optim', type=str, default='sgd', choices=['adam', 'sgd'])
 
 	# parser.add_argument('--multi_gpu', default=False, action='store_true',
-						help='Use Multi GPU')
+	#					help='Use Multi GPU')
 	
 	parser.add_argument('--no_multi_gpu', default=False, action='store_true',
 						help='Do Not Use Multi GPUs')
