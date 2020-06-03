@@ -27,19 +27,21 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 	start_time = time.time()
 
-	for param_group in optimizer.param_groups:
-		train_learning_rate = float(param_group['lr'])
+	#for param_group in optimizer.param_groups:
+	#	train_learning_rate = float(param_group['lr'])
 
 	# logging('epoch %d, processed %d samples, lr %f' % (epoch, epoch * len(train_loader.dataset), train_learning_rate))
 
 	running_loss = 0.0
 
 	model.train()
+	
 	print('[*]Training...')
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 	for batch_idx, (data, label) in enumerate(tqdm(train_loader)):
 
-
+		print('main.py size(data): ', data.shape)
+		
 		data = data.squeeze(0)
 		data = Variable(data).to(opt.device)
 
@@ -82,9 +84,10 @@ def valid(opt, epoch, model, valid_loader, metric):
 	with torch.no_grad():
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
+			# data = data.squeeze(0) 
+
 			Batch,T,C,H,W = data.size()
-			
-			data = data.squeeze(0) 
+						
 			data = Variable(data).to(opt.device) 
 
 
@@ -93,12 +96,12 @@ def valid(opt, epoch, model, valid_loader, metric):
 
 			output = []
 			for batch_index in range(Batch):
-				# print('batch: ',Batch)
-				# print('batch idx: ',batch_index)
-				# print('@@ ',data[batch_index].shape)
-				output_feature = model(data[batch_index])
-				output.append(output_feature)
-			# print('output: ',output)
+				print('batch: ',Batch)
+				print('batch idx: ',batch_index)
+				print('@@ ',data[batch_index].shape)
+					output_feature = model(data[batch_index])
+					output.append(output_feature)
+			print('output: ',output)
 
 			output = torch.cat(output,0)
 			# print('concat output :',output)
@@ -187,6 +190,8 @@ if __name__ == "__main__":
 
 	else : 
 		print('Using only CPU')
+
+
 
 	print('Initialize networks')
 	model = VggNet()
