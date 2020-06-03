@@ -178,7 +178,7 @@ if __name__ == "__main__":
 		if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
 			print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
 		else :
-			opt.multi_gpu = False
+			opt.no_multi_gpu = True
 
 	else : 
 		print('Using only CPU')
@@ -198,7 +198,7 @@ if __name__ == "__main__":
 	if opt.resume or opt.resume_best:
 		opt.start_epoch, model, optimizer = load_model(opt, model, optimizer=optimizer)
 	
-	if opt.multi_gpu:
+	if opt.no_multi_gpu:
 		model = nn.DataParallel(model)
 
 	train_data_loader = get_dataloader(opt,'train')
