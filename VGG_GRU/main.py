@@ -86,7 +86,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 
 			data = data.squeeze(0) 
 
-			Batch,T,C,H,W = data.size()
+			# Batch,T,C,H,W = data.size()
 						
 			data = Variable(data).to(opt.device) 
 
