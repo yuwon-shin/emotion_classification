@@ -183,15 +183,14 @@ if __name__ == "__main__":
 		if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
 			print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
 		else :
-			opt.multi_gpu = True
+			opt.no_multi_gpu = True
 
 	else : 
 		print('Using only CPU')
 
 	print('Initialize networks')
 	model = VggNet()
-	#####
-	# model = model.to(opt.device)
+	model = model.to(opt.device)
 
 	print("Setting Optimizer & loss")
 	if opt.optim == 'sgd':
