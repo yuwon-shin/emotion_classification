@@ -1,4 +1,4 @@
-## cuda 사용 x
+## cuda 사용
 ## 경로 변경
 
 from __future__ import print_function	# for compatibility
@@ -79,16 +79,16 @@ def valid(opt, epoch, model, valid_loader, metric):
 	print('[*]Validation...')
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 
-	with torch.no_grad():		# gradient를 저장하지 않겠다!
+	with torch.no_grad():
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
 			Batch,T,C,H,W = data.size()
 			
 			data = data.squeeze(0) 
-			data = Variable(data) #.cuda() or ##### to(opt.device)
+			data = Variable(data).to(opt.device) #.cuda() or ##### to(opt.device)
 
 
-			label = Variable(label.long()) #.cuda() or ##### to(opt.device)
+			label = Variable(label.long()).to(opt.device) #.cuda() or ##### to(opt.device)
 			label = label.squeeze(1)
 
 			output = []
@@ -104,14 +104,16 @@ def valid(opt, epoch, model, valid_loader, metric):
 			# print('concat output :',output)
 			
 			metric(output, label)
-			accuracy,eval_loss = metric.value()
-			avg_loss = eval_loss/((batch_idx+1)*opt.batch_size)
-			
-			print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
-			print('acc & loss:',accuracy, '&', eval_loss)
+			#print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
+			#print('acc & loss:',accuracy, '&', eval_loss)
 
-	print('[*]Validation...')
-	print('Epoch {}/{}'.format(epoch, opt.epochs))
+		accuracy,eval_loss = metric.value()
+		avg_loss = eval_loss/((batch_idx+1)*opt.batch_size)
+			
+
+	print("===> total {:.2f}sec.. valid accuracy: {:.3f} | valid loss: {:.6f}"
+				.format(epoch, opt.epochs, time.time()-start_time, accuracy, avg_loss))
+
 
 	return accuracy, avg_loss	
 
@@ -119,7 +121,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 if __name__ == "__main__":
 	# os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
-	data_dir = './data./face_data'
+	data_dir = '../../../../data/face_data'
 	train_dir = os.path.join(data_dir, 'train')
 	checkpoint_dir = os.path.join(data_dir, 'checkpoint')
 	test_dir = os.path.join(data_dir, 'val')
@@ -141,13 +143,13 @@ if __name__ == "__main__":
 	parser.add_argument('--num_workers', type=int, default=2)
 	parser.add_argument('--optim', type=str, default='sgd', choices=['adam', 'sgd'])
 
-	parser.add_argument('--multi_gpu', default=False, action='store_true',
-						help='Use Multi GPU')
+	parser.add_argument('--no_multi_gpu', default=False, action='store_true',
+						help='Do Not Use Multi GPU')
 
 	#####
 	# parser.add_argument('--no_multi_gpu', default=False, action='store_true',
 	#					help='Do Not Use Multi GPUs')
-	# parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
+	parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
 
 	parser.add_argument('--data_dir', type=str, default=data_dir,
 						help='dataset path')
@@ -163,28 +165,28 @@ if __name__ == "__main__":
 	opt = parser.parse_args()
 
 	torch.manual_seed(1)
-	# torch.cuda.manual_seed(1)
-	torch.backends.cudnn.benchmark = False
+	torch.cuda.manual_seed(1)
+	torch.backends.cudnn.benchmark = True
 
 	print(opt)
 
 	###here for same result#####
-	torch.backends.cudnn.enabled = False
-	torch.backends.cudnn.deterministic = False
+	#torch.backends.cudnn.enabled = False
+	#torch.backends.cudnn.deterministic = False
 
 	#####
-	# if torch.cuda.is_available():
-	# 	print('Setting GPU')
-	# 	print('===> CUDA Available: ', torch.cuda.is_available())
-	# 	opt.device = 'cuda'
+	if torch.cuda.is_available():
+		print('Setting GPU')
+		print('===> CUDA Available: ', torch.cuda.is_available())
+		opt.device = 'cuda'
 
-	# 	if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
-	# 		print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
-	# 	else :
-	# 		opt.multi_gpu = False
+		if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
+			print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
+		else :
+			opt.multi_gpu = True
 
-	# else : 
-	# 	print('Using only CPU')
+	else : 
+		print('Using only CPU')
 
 	print('Initialize networks')
 	model = VggNet()
@@ -202,7 +204,7 @@ if __name__ == "__main__":
 	if opt.resume or opt.resume_best:
 		opt.start_epoch, model, optimizer = load_model(opt, model, optimizer=optimizer)
 	
-	if opt.multi_gpu:
+	if not opt.multi_gpu:
 		model = nn.DataParallel(model)
 
 	train_data_loader = get_dataloader(opt,'train')
