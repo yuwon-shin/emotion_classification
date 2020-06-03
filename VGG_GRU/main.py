@@ -1,5 +1,4 @@
 ## cuda 사용
-## 경로 변경
 
 from __future__ import print_function	# for compatibility
 import os
@@ -27,24 +26,21 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 	start_time = time.time()
 
-	#for param_group in optimizer.param_groups:
-	#	train_learning_rate = float(param_group['lr'])
+	for param_group in optimizer.param_groups:
+		train_learning_rate = float(param_group['lr'])
 
 	# logging('epoch %d, processed %d samples, lr %f' % (epoch, epoch * len(train_loader.dataset), train_learning_rate))
 
 	running_loss = 0.0
 
 	model.train()
-	
 	print('[*]Training...')
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 	for batch_idx, (data, label) in enumerate(tqdm(train_loader)):
 
+
 		data = data.squeeze(0)
 		data = Variable(data).to(opt.device)
-
-		print('data: ', data)
-		print('data shape: ', data.shape)
 
 		label = Variable(label.long()).to(opt.device)
 		label = label.squeeze(1)		
@@ -55,7 +51,7 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 		output = model(data)
 		# print("main.py output : ",output)
-		print('main.py output.shape  :', output.shape)
+		# print('main.py output.shape  :', output.shape)
 
 		loss = loss_function(output, label)
 		# print('loss.item()',loss.item())
@@ -86,18 +82,19 @@ def valid(opt, epoch, model, valid_loader, metric):
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
 			Batch,T,C,H,W = data.size()
-						
-			data = Variable(data).to(opt.device) 
+			
+			data = data.squeeze(0) 
+			data = Variable(data).to(opt.device)
 
 
-			label = Variable(label.long()).to(opt.device) 
+			label = Variable(label.long())to(opt.device)
 			label = label.squeeze(1)
 
 			output = []
 			for batch_index in range(Batch):
-				#print('batch: ',Batch)
-				#print('batch idx: ',batch_index)
-				#print('@@ ',data[batch_index].shape)
+				# print('batch: ',Batch)
+				# print('batch idx: ',batch_index)
+				# print('@@ ',data[batch_index].shape)
 				output_feature = model(data[batch_index])
 				output.append(output_feature)
 			# print('output: ',output)
@@ -106,16 +103,14 @@ def valid(opt, epoch, model, valid_loader, metric):
 			# print('concat output :',output)
 			
 			metric(output, label)
-			#print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
-			#print('acc & loss:',accuracy, '&', eval_loss)
-
-		accuracy,eval_loss = metric.value()
-		avg_loss = eval_loss/((batch_idx+1)*opt.batch_size)
+			accuracy,eval_loss = metric.value()
+			avg_loss = eval_loss/((batch_idx+1)*opt.batch_size)
 			
+			print('Validation [{}/{}] accuracy : {:.2f}, loss : {:.6f}'.format(batch_idx, len(valid_loader), accuracy, avg_loss))
+			print('acc & loss:',accuracy, '&', eval_loss)
 
-	print("===> total {:.2f}sec.. valid accuracy: {:.3f} | valid loss: {:.6f}"
-				.format(epoch, opt.epochs, time.time()-start_time, accuracy, avg_loss))
-
+	print('[*]Validation...')
+	print('Epoch {}/{}'.format(epoch, opt.epochs))
 
 	return accuracy, avg_loss	
 
@@ -123,7 +118,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 if __name__ == "__main__":
 	# os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
-	data_dir = '../../../../data/face_data'
+	data_dir = './data./face_data'
 	train_dir = os.path.join(data_dir, 'train')
 	checkpoint_dir = os.path.join(data_dir, 'checkpoint')
 	test_dir = os.path.join(data_dir, 'val')
@@ -131,7 +126,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='PyTorch Facial Expression')
 
-	parser.add_argument('--batch_size', type=int, default=4,
+	parser.add_argument('--batch_size', type=int, default=16,
 						help='input batch size for valid/train = 1')
 	parser.add_argument('--img_size', type=int, default=64)
 	parser.add_argument('--epochs', type=int, default=200,
@@ -145,13 +140,13 @@ if __name__ == "__main__":
 	parser.add_argument('--num_workers', type=int, default=2)
 	parser.add_argument('--optim', type=str, default='sgd', choices=['adam', 'sgd'])
 
-	parser.add_argument('--no_multi_gpu', default=False, action='store_true',
-						help='Do Not Use Multi GPU')
+	parser.add_argument('--multi_gpu', default=False, action='store_true',
+						help='Use Multi GPU')
 
 	#####
 	# parser.add_argument('--no_multi_gpu', default=False, action='store_true',
 	#					help='Do Not Use Multi GPUs')
-	parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
+	# parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
 
 	parser.add_argument('--data_dir', type=str, default=data_dir,
 						help='dataset path')
@@ -166,17 +161,16 @@ if __name__ == "__main__":
 
 	opt = parser.parse_args()
 
-	torch.manual_seed(1)
+	# torch.manual_seed(1)
 	torch.cuda.manual_seed(1)
-	torch.backends.cudnn.benchmark = True
+	torch.backends.cudnn.benchmark = False
 
 	print(opt)
 
 	###here for same result#####
-	#torch.backends.cudnn.enabled = False
-	#torch.backends.cudnn.deterministic = False
+	torch.backends.cudnn.enabled = False
+	torch.backends.cudnn.deterministic = False
 
-	#####
 	if torch.cuda.is_available():
 		print('Setting GPU')
 		print('===> CUDA Available: ', torch.cuda.is_available())
@@ -185,12 +179,10 @@ if __name__ == "__main__":
 		if torch.cuda.device_count() > 1 and not opt.no_multi_gpu:
 			print('===> Use {} Multi GPUs'.format(torch.cuda.device_count()))
 		else :
-			opt.no_multi_gpu = True
+			opt.multi_gpu = False
 
 	else : 
 		print('Using only CPU')
-
-
 
 	print('Initialize networks')
 	model = VggNet()
@@ -207,7 +199,7 @@ if __name__ == "__main__":
 	if opt.resume or opt.resume_best:
 		opt.start_epoch, model, optimizer = load_model(opt, model, optimizer=optimizer)
 	
-	if not opt.no_multi_gpu:
+	if opt.multi_gpu:
 		model = nn.DataParallel(model)
 
 	train_data_loader = get_dataloader(opt,'train')
