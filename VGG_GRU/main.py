@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='PyTorch Facial Expression')
 
-	parser.add_argument('--batch_size', type=int, default=16,
+	parser.add_argument('--batch_size', type=int, default=4,
 						help='input batch size for valid/train = 1')
 	parser.add_argument('--img_size', type=int, default=64)
 	parser.add_argument('--epochs', type=int, default=200,
