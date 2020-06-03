@@ -43,6 +43,7 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 		data = data.squeeze(0)
 		data = Variable(data).to(opt.device)
 
+		print('data: ', data)
 		print('data shape: ', data.shape)
 
 		label = Variable(label.long()).to(opt.device)
@@ -54,7 +55,7 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 		output = model(data)
 		# print("main.py output : ",output)
-		# print('main.py output.shape  :', output.shape)
+		print('main.py output.shape  :', output.shape)
 
 		loss = loss_function(output, label)
 		# print('loss.item()',loss.item())
@@ -84,9 +85,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 	with torch.no_grad():
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
-			data = data.squeeze(0) 
-
-			# Batch,T,C,H,W = data.size()
+			Batch,T,C,H,W = data.size()
 						
 			data = Variable(data).to(opt.device) 
 
@@ -96,12 +95,12 @@ def valid(opt, epoch, model, valid_loader, metric):
 
 			output = []
 			for batch_index in range(Batch):
-				print('batch: ',Batch)
-				print('batch idx: ',batch_index)
-				print('@@ ',data[batch_index].shape)
+				#print('batch: ',Batch)
+				#print('batch idx: ',batch_index)
+				#print('@@ ',data[batch_index].shape)
 				output_feature = model(data[batch_index])
 				output.append(output_feature)
-			print('output: ',output)
+			# print('output: ',output)
 
 			output = torch.cat(output,0)
 			# print('concat output :',output)
