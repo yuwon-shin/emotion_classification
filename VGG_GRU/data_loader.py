@@ -1,7 +1,3 @@
-## cpu ver.
-## gpu 사용시 pinMemory = True
-
-
 #!/usr/bin/python
 # encoding: utf-8
 
@@ -57,7 +53,7 @@ class FER(data.Dataset):
             if self.iter:
                 return self.iter
             else : 
-                return int(((self.len0 + self.len1 + self.len2))/100)
+                return int(((self.len0 + self.len1 + self.len2)))
         elif self.mode == 'valid': #valid는 iter에 상관없이 항상 모든 데이터 보게끔
             return int(((self.len0 + self.len1 + self.len2)))
 
@@ -129,6 +125,7 @@ class FER(data.Dataset):
         aug_img = self.augment(resize_img)
         return aug_img
 
+'''
     #For real-time
     def face_detection(self, dir):
         # dir = [face_detector_dir, emot_classifier_dir, save_dir]
@@ -205,6 +202,7 @@ class FER(data.Dataset):
         # cv2.destroyAllWindows()
 
         return crop_img
+        '''
         
 
 
@@ -216,15 +214,15 @@ def get_dataloader(opt,mode):
     print('Length of {} dataloader : {}'.format(opt.mode, length))
     if mode == 'train':
         dataloader = data.DataLoader(dataset=dataset,
-                                batch_size=1,
-                                shuffle=True,
-                                pin_memory=False,
+                                batch_size=opt.batch_size,
+                                shuffle=False,
+                                pin_memory=True,
                                 num_workers=opt.num_workers)
     elif mode == 'valid':
         dataloader = data.DataLoader(dataset=dataset,
                                 batch_size=opt.batch_size,
-                                shuffle=True,
-                                pin_memory=False,
+                                shuffle=False,
+                                pin_memory=True,
                                 num_workers=opt.num_workers)
     
     return dataloader
