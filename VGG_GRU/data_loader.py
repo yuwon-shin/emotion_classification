@@ -214,8 +214,8 @@ def get_dataloader(opt,mode):
     print('Length of {} dataloader : {}'.format(opt.mode, length))
     if mode == 'train':
         dataloader = data.DataLoader(dataset=dataset,
-                                batch_size=opt.batch_size,
-                                shuffle=False,
+                                batch_size=1,
+                                shuffle=True,
                                 pin_memory=True,
                                 num_workers=opt.num_workers)
     elif mode == 'valid':
@@ -226,7 +226,6 @@ def get_dataloader(opt,mode):
                                 num_workers=opt.num_workers)
     
     return dataloader
-
 
 
 
