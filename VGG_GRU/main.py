@@ -41,9 +41,9 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 
 
 		data = data.squeeze(0)
-		data = Variable(data) #.cuda() or ##### to(opt.device)
+		data = Variable(data).to(opt.device)
 
-		label = Variable(label.long()) #.cuda() or ##### to(opt.device)
+		label = Variable(label.long()).to(opt.device)
 		label = label.squeeze(1)		
 		# print('main.py label: ',label)
 		# print("main.py size(label): ",label.shape)
@@ -85,10 +85,10 @@ def valid(opt, epoch, model, valid_loader, metric):
 			Batch,T,C,H,W = data.size()
 			
 			data = data.squeeze(0) 
-			data = Variable(data).to(opt.device) #.cuda() or ##### to(opt.device)
+			data = Variable(data).to(opt.device) 
 
 
-			label = Variable(label.long()).to(opt.device) #.cuda() or ##### to(opt.device)
+			label = Variable(label.long()).to(opt.device) 
 			label = label.squeeze(1)
 
 			output = []
