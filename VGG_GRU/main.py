@@ -118,7 +118,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 if __name__ == "__main__":
 	# os.environ['CUDA_VISIBLE_DEVICES'] = "1"
 
-	data_dir = './data./face_data'
+	data_dir = '../../../../data/face_data'
 	train_dir = os.path.join(data_dir, 'train')
 	checkpoint_dir = os.path.join(data_dir, 'checkpoint')
 	test_dir = os.path.join(data_dir, 'val')
