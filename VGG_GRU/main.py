@@ -144,7 +144,7 @@ if __name__ == "__main__":
 						help='Use Multi GPU')
 	
 	parser.add_argument('--no_multi_gpu', default=False, action='store_true',
-					help='Do Not Use Multi GPUs')
+						help='Do Not Use Multi GPUs')
 	parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
 
 	parser.add_argument('--data_dir', type=str, default=data_dir,
