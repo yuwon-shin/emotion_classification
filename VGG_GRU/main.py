@@ -140,13 +140,12 @@ if __name__ == "__main__":
 	parser.add_argument('--num_workers', type=int, default=2)
 	parser.add_argument('--optim', type=str, default='sgd', choices=['adam', 'sgd'])
 
-	parser.add_argument('--multi_gpu', default=False, action='store_true',
+	# parser.add_argument('--multi_gpu', default=False, action='store_true',
 						help='Use Multi GPU')
-
-	#####
-	# parser.add_argument('--no_multi_gpu', default=False, action='store_true',
-	#					help='Do Not Use Multi GPUs')
-	# parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
+	
+	parser.add_argument('--no_multi_gpu', default=False, action='store_true',
+					help='Do Not Use Multi GPUs')
+	parser.add_argument('--device', type=str, choices=['cpu', 'cuda'], default='cpu')
 
 	parser.add_argument('--data_dir', type=str, default=data_dir,
 						help='dataset path')
