@@ -84,7 +84,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 	with torch.no_grad():
 		for batch_idx, (data, label) in enumerate(tqdm(valid_loader)):
 
-			# data = data.squeeze(0) 
+			data = data.squeeze(0) 
 
 			Batch,T,C,H,W = data.size()
 						
