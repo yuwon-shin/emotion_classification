@@ -40,10 +40,10 @@ def train(opt, epoch, model, optimizer, loss_function, train_loader):
 	print('Epoch {}/{}'.format(epoch, opt.epochs))
 	for batch_idx, (data, label) in enumerate(tqdm(train_loader)):
 
-		print('main.py size(data): ', data.shape)
-
 		data = data.squeeze(0)
 		data = Variable(data).to(opt.device)
+
+		print('data shape: ', data.shape)
 
 		label = Variable(label.long()).to(opt.device)
 		label = label.squeeze(1)		
