@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# encoding: utf-8
-
 import os
 import cv2
 import glob
@@ -125,86 +122,6 @@ class FER(data.Dataset):
         aug_img = self.augment(resize_img)
         return aug_img
 
-'''
-    #For real-time
-    def face_detection(self, dir):
-        # dir = [face_detector_dir, emot_classifier_dir, save_dir]
-
-
-        #face detect
-        camera = cv2.VideoCapture(0)
-        # 얼굴 detect할 classifier (ex - lbpcascade_frontalface_default.xml')
-        face_detector = cv2. CascadeClassifier(dir[0])
-        # emotion classifier 모델 (ex - 'emotion_model.hdf5')
-        emotion_classifier = load_model(dir[1], compile=False)
-        classes = [0, 1, 2] # ['not understand','neutral','understand']
-        while True:
-            # Capture image from camera
-            ret, frame = camera.read()  # ret: frame 사용 가능 여부
-                                        # frame: 캡쳐된 image arr vector
-            # to gray scale
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            # Face detection in frame
-            faces = face_detector.detectMultiScale(gray,
-                                                    scaleFactor=1.1,
-                                                    minNeighbors=5,
-                                                    minSize=(30,30))
-
-            # Perform emotion recognition only when face is detected
-            if len(faces) > 0:
-                # For the largest image
-                face = sorted(faces, reverse=True, key=lambda x: (x[2]-x[0]) * (x[3]-x[1]))[0]
-                # reverse=True: 내림차순 / lamda: x(faces)를 받아서 ':'이후의 식 반환
-                (fX, fY, fW, fH) = face
-                # Resize the image for neural network
-                roi = gray[fY:fY + fH, fX:fX + fW]
-                roi = cv2.resize(roi, (self.img_size, self.img_size))   ### size 이렇게 써도 되나..
-                roi = roi.astype("float") / 255.0
-                roi = img_to_array(roi)
-                crop_img = np.expand_dims(roi, axis=0)   # 0: 제일 앞에 있는 차원 추가 
-
-                # Emotion predict
-                preds = emotion_classifier.predict(crop_img)[0]
-                label = classes[preds.argmax()]
-
-                # Save files
-
-                fourcc = cv2.VideoWriter_fourcc(*'XVID')    # ('코덱') → 인코딩 방식 설정
-                record = False
-                now = datetime.datetime.now().strftime("%d_%H-%M-%S")   # 이름으로 쓸 현재 시간
-
-                key = cv2.waitKey(10)   # 10ms마다 누른 키보드 값 갱신
-                if key == 26:   # <ctrl + z> to capture
-                    print("캡쳐")
-                    cv2.imwrite(dir[2] + str(now) + ".jpg", crop_img)
-                elif key == 24:   # <ctrl + x> to record
-                    print("녹화 시작")
-                    record = True
-                    video = cv2.VideoWriter(dir[2] + str(now) + ".avi", fourcc, 20.0, (frame.shape[1], frame.shape[0]))
-                                                    # (path, codec, fps, width & heigth) 
-                                                    ### 얘는 크기를 어떻게 할까?
-                elif key == 3:   # <ctrl + c> to stop
-                    print("녹화 중지")
-                    record = False
-                    video.release()
-
-                if record == True:
-                    print("녹화 중..")
-                    video.write(frame)
-
-            # q to quit
-            if key == ord('q'):
-                print("카메라 종료")
-                break
-
-        # Clear program and close windows
-        camera.release()
-        # cv2.destroyAllWindows()
-
-        return crop_img
-        '''
-        
-
 
 def get_dataloader(opt,mode):
 
@@ -221,11 +138,8 @@ def get_dataloader(opt,mode):
     elif mode == 'valid':
         dataloader = data.DataLoader(dataset=dataset,
                                 batch_size=opt.batch_size,
-                                shuffle=False,
+                                shuffle=True,
                                 pin_memory=True,
                                 num_workers=opt.num_workers)
     
     return dataloader
-
-
-
