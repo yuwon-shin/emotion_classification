@@ -87,7 +87,7 @@ def valid(opt, epoch, model, valid_loader, metric):
 			data = Variable(data).to(opt.device)
 
 
-			label = Variable(label.long())to(opt.device)
+			label = Variable(label.long()).to(opt.device)
 			label = label.squeeze(1)
 
 			output = []
