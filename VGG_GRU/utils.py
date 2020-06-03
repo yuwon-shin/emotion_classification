@@ -47,9 +47,9 @@ def save_checkpoint(opt, model, optimizer, epoch, loss, acc):
         os.makedirs(checkpoint_dir)
 
     date = time.strftime('%Y-%m-%d',time.localtime(time.time()))
-    checkpoint_path = os.path.join(checkpoint_dir, '%s_models_epoch_%d_loss_%.6f_acc_%.3f.pth'%(date, epoch, loss, acc))
+    checkpoint_path = os.path.join(checkpoint_dir, '%s_models_epoch_%04d_loss_%.6f_acc_%.3f.pth'%(date, epoch, loss, acc))
 
-    if torch.cuda.device_count()>1 and opt.multi_gpu:
+    if torch.cuda.device_count()>1 and not opt.no_multi_gpu:
         state = {'epoch':epoch, 'model':model.module.state_dict(), 'optimizer':optimizer.state_dict()}
     else :
         state = {'epoch':epoch, 'model':model.state_dict(), 'optimizer': optimizer.state_dict()}
