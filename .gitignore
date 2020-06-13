@@ -1,0 +1,14 @@
+/**/*.jpg
+/**/*.log
+/**/*.pth
+/*.model
+/**/*.pyc
+/*.pyc
+# /**/*.xml
+# /**/*.npy
+# /**/*.txt
+/**/*.caffemodel
+/*.png
+/*.avi
+# /**/*.pb
+# /**/*.dat
