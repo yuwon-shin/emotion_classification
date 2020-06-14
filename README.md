@@ -1,29 +1,70 @@
+Emotion Recognition
+==== 
 reference github : https://github.com/XiaoYee/emotion_classification
 
+the purpose of this repository is to explore Degree Of Understanding(DoU) with deep learning in real time 
 
-# Resnet_GRU
-
-train command:
-python main.py --optim adam --multi_gpu --length 4 --iter 1000
-
---resume : resume training, continue with latest checkpoint
---resume_best : resume training, continue with best checkpoint
+Environment:
+====
+        python 3.7.4
+        pytorch 1.2.0
 
 
-if you want to debug sth, reduce iter(num of iters for each epoch) and check the bug
+Detection Models
+====
+1. Haar_cascade
+2. Blazeface
+3. DNN
+4. HOG
+5. MMOD
+6. MTCNN 
 
 
+Classification Models
+====
+1. VGG
+2. VGG_GRU
+3. RESNET_GRU
 
-## 바꿔야 할 것
-1. checkpoint path 조정 --> dir만들어서 분리하기
-2. cuda available 확인해서 device 조정 ok
-3. multi gpu도 자동 설정되게 변경 ok
-4. training tqdm으로 바꾸기 ok
-5. fine tuning
-    1. length 바꾸기
-    2. adam vs sgd
-    3. attention 추가해볼까
-    4. lr scheduler
-    5. 이미지에 노이즈 추가
-    6. trainig img histogram equalization?
-6. face detection도 딥러닝으로 해서 정확도 높이기
+
+Models Detail:
+====
+...
+
+
+Dataset:
+____
+
+reclassify FER2013, JAFFE, KDEF
+```
+DATASET
+│  
+└───Not Understand(4,327)
+│   
+└───Neutral (2,176)
+│   
+└───Understand(3,378)
+
+```
+
+
+Performance:
+===
+all the performance train and test on FER2013, JAFFE, KDEF train and validation partition. 
+speed [sec/4frame]
+
+
+Model        |VGG             |  VGG+GRU | Resnet+GRU                 | 
+--------     | --------       | -------- |  --------                  |
+precision    | 49.8%          |   82.7%  |    94.3%                   |
+
+
+test with private video
+Model        |  Detection speed  |  Classification speed  |    sum    | 
+--------     | --------       | -------- |  --------                  |
+blazeface    | 0.089          |   0.281  |    0.370                   |
+dnn(opencv)  | 0.209          |   0.278  |    0.487                   |
+mmod(dlib)   | 13.181         |   0.316  |    13.50                   |
+haar(opencv) | 0.244          |   0.265  |    0.509                   |
+mtcnn        | 0.648          |   0.283  |    0.931                   |
+hog(dlib)    | 0.149          |   0.301  |    0.450                   |
