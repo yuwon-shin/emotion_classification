@@ -25,9 +25,11 @@ class AccumulatedAccuracyMetric():
         self.loss = 0
 
     def __call__(self, outputs, target):
-        pred = outputs.data.cpu().max(1, keepdim=True)[1]
-        self.correct += pred.eq(target[0].data.cpu().view_as(pred)).cpu().sum()
-        self.total += target[0].size(0)
+        pred = outputs.data.cpu().max(1)[1] #max value index
+        self.correct += pred.eq(target.data.cpu()).sum() #비교해서 일치하는 애들 개수 sum
+        # print('correct: ',self.correct)
+        self.total += len(target)
+        # print('self.total:',self.total)
         self.loss += loss_function(outputs, target)
         return self.value()
 
@@ -38,11 +40,48 @@ class AccumulatedAccuracyMetric():
 
     def value(self):
         return float(self.correct) / self.total, float(self.loss)
+
+def save_checkpoint(opt, model, optimizer, epoch, loss, acc):
+    checkpoint_dir = opt.checkpoint_dir
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
+    date = time.strftime('%Y-%m-%d',time.localtime(time.time()))
+    checkpoint_path = os.path.join(checkpoint_dir, '%s_models_epoch_%04d_loss_%.6f_acc_%.3f.pth'%(date, epoch, loss, acc))
+
+    if torch.cuda.device_count()>1:
+        state = {'epoch':epoch, 'model':model.state_dict(), 'optimizer':optimizer.state_dict()}
     
-    def correct_number(self):
-        return self.correct
+
+    torch.save(state, checkpoint_path)
+    print('checkpoint saved to {}'.format(checkpoint_path))
+
+def load_model(opt, model, optimizer):
+    checkpoint_list = glob.glob(os.path.join(opt.checkpoint_dir, '*.pth'))
+    checkpoint_list.sort()
+
+    if opt.resume_best:
+        loss_list = list(map(lambda x : float(os.path.basename(x).split('_')[5]), checkpoint_list))
+        best_loss_idx = loss_list.index(min(loss_list))
+        checkpoint_path = checkpoint_list[best_loss_idx]
+    else:
+        checkpoint_path = checkpoint_list[len(checkpoint_list)-1]
+    
+    if os.path.isfile(checkpoint_path):
+        print("==> loading checkpoint '{}'".format(os.path.basename(checkpoint_path)))
+        checkpoint = torch.load(checkpoint_path)
+        n_epoch = checkpoint['epoch']
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+    else :
+        print('=> no checkpoint found')
+    
+    print('Using epoch_num : ', n_epoch)
+
+    return n_epoch+1, model, optimizer
 
 
+    
 
 
 def weights_normal_init(model, dev=0.01):
@@ -162,7 +201,7 @@ class VGG_Net(nn.Module):
         super(VGG_Net, self).__init__()
 
         self.pre_model = nn.Sequential(*list(model.children())[:-1])
-        self.classifier = nn.Linear(4096, 7)
+        self.classifier = nn.Linear(4096, 3)    # 원래 (4096, 7)이었는데 우리는 클래스가 3개라 3으로 바꿈 #
 
     def forward(self, x):
         x = self.pre_model(x)
@@ -175,7 +214,12 @@ def Initial(model):
 
     model_vggface = VGG_Face_torch
     model_emotion = VGG_Net(model_vggface)
+    #
+    num_ftrs = model_emotion.in_features
+    model_emotion.classifier = nn.Linear(num_ftrs, 4)
+    #
     model_emotion.load_state_dict(torch.load('best7164.model'))
+    
     model_before_dict = model_emotion.state_dict()
 
     # model = FERANet()
