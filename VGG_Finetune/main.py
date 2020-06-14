@@ -16,26 +16,27 @@ import model as md
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyper-parameters
-lr = 1e-6
-epochs = 150
-batch_size = 64
+lr = 1e-5
+epochs = 500
+batch_size = 2
 
-
-train_dataset = FER('face_data', image_size=64, mode='train')
+train_data_path = '../../../data/face_data'
+train_dataset = FER(train_data_path , image_size=64, mode='train')
 train_dataloader = DataLoader(train_dataset,  batch_size=batch_size, shuffle = True)
 
-valid_dataset = FER('face_data',image_size=64, mode='test')
+valid_data_path = '../../../data/face_data'
+valid_dataset = FER(valid_data_path,image_size=64, mode='val')
 valid_dataloader = DataLoader(valid_dataset,  batch_size=batch_size, shuffle = False)
 
 
-# model = md.vgg16(pretrained = True, num_classes = 3).to(device)
+model = md.vgg16_bn(num_classes = 3).to(device)
 
 
 
-model_name = 'vgg16'
-feature_extract = True
-num_classes = 3
-model = md.init_pretrained_models(model_name, num_classes, feature_extract, use_pretrained=True)
+# model_name = 'vgg16'
+# feature_extract = True
+# num_classes = 3
+# model = md.init_pretrained_models(model_name, num_classes, feature_extract, use_pretrained=True)
 
 
 model.to(device)
@@ -134,8 +135,7 @@ for epoch in range(epochs):
     # valid_writer.add_scalar('accuracy', valid_acc, epoch)
 
     if (epoch+1) % 5 == 0 :
-        save_path = os.path.join('.', 'save_model')
+        save_path = os.path.join('.', 'save_')
         if not os.path.exists(save_path):
             os.makedirs(save_path)
         torch.save(model, os.path.join(save_path, 'model_epoch%04d_loss_%.4f_acc_%.4f.ckpt'%(epoch, valid_loss, valid_acc)))
-

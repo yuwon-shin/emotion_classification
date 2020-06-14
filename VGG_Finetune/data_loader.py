@@ -27,5 +27,3 @@ class FER(data.Dataset) :
         label = torch.tensor(label)
 
         return data, label
-
-

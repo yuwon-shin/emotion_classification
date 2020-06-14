@@ -4,11 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import models
-from resnet_gru import BasicBlock1, ResLSTMNet
+from Resnet_GRU.resnet_gru import BasicBlock1, ResLSTMNet
+from VGG_GRU.VGG_gru import VggNet
 import time
 import argparse
 import dlib
-from Hog import detectFaceDlibHog
+from MMOD import detectFaceDlibMMOD
 
 
 
@@ -41,14 +42,26 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Facial Expression real-time test')
     parser.add_argument('--device', default='cpu', choices=['cpu', 'cuda'])
+    parser.add_argument('--real', action='store_true')
+    parser.add_argument('--model', default='resnet_gru', choices=['resnet_gru','vgg_gru'])
     opt = parser.parse_args()
 
-    ## 모델 만들기
-    model = ResLSTMNet(BasicBlock1, [1, 2, 5, 3])
+    ##모델 만들기
+    if opt.model == 'resnet_gru':
+        model = ResLSTMNet(BasicBlock1, [1, 2, 5, 3]) 
+        checkpoint = 'Resnet_GRU/rsenet_gru_best_checkpoint_0.943.pth' 
+    else : 
+        model = VggNet()
+        checkpoint = 'VGG_GRU/vgg_gru_best_checkpoint_0.827.pth'
 
     # Face detection XML load and trained model loading
-    face_detector = dlib.get_frontal_face_detector()
-    emotion_classifier = torch.load('../../data/face_data/checkpoint/2020-05-05_models_epoch_0451_loss_0.008156_acc_0.943.pth', map_location=torch.device('cpu'))
+    face_detector = dlib.cnn_face_detection_model_v1("mmod_human_face_detector.dat")
+     # emotion_classifier = torch.load(
+     #    '../../../data/face_data/checkpoint/2020-05-05_models_epoch_0451_loss_0.008156_acc_0.943.pth',
+     #    map_location=torch.device('cpu'))
+    emotion_classifier = torch.load(
+        checkpoint,
+        map_location=torch.device('cpu'))
     model.load_state_dict(emotion_classifier['model'])
 
     if torch.cuda.is_available() and opt.device == 'cuda':
@@ -56,12 +69,13 @@ if __name__ == "__main__":
         opt.device = 'cuda'
         model = model.to(opt.device)
     else:
+        print('using CPU')
         opt.device = 'cpu'
 
     EMOTIONS = ["Not Understand", "Neutral", "Understand"]
 
     # Video capture using webcam
-    camera = cv2.VideoCapture(0)
+    camera = cv2.VideoCapture(0) if opt.real else cv2.VideoCapture('../../data/face_data/test/test.mp4')
 
     if camera.isOpened():
         print('width: {}, height : {}'.format(camera.get(3), camera.get(4)))
@@ -88,13 +102,12 @@ if __name__ == "__main__":
                     break
                 frame_count += 1
 
-                outDlibHog, bboxes = detectFaceDlibHog(face_detector, frame)
+                outDlibMMOD, bboxes = detectFaceDlibMMOD(face_detector, frame)
 
-                temp = [0,0,0,0]
+                temp = [0, 0, 0, 0]
 
-                if np.array_equal(bboxes,temp) :
+                if np.array_equal(bboxes, temp):
                     frame_count -= 1
-
 
             (fX, fY, fX_fW, fY_fH) = bboxes[0], bboxes[1], bboxes[2] ,bboxes[3]
 

@@ -207,4 +207,3 @@ def init_pretrained_models(model_name, num_classes, feature_extract, use_pretrai
     model_ft.fc = nn.Linear(num_ftrs, num_classes)
 
     return model_ft
-
